@@ -1,48 +1,43 @@
-import express from "express";
-import cors from "cors";
-import OpenAI from "openai";
-import * as dotenv from "dotenv";
-
-dotenv.config();
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const { OpenAI } = require("openai");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Configuração da OpenAI
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const systemPrompt = `
-You are Nexia, a friendly and helpful assistant created by the user.
-Respond in a warm and human tone.
-`;
+// Rota de teste
+app.get("/", (req, res) => {
+  res.send("🔥 Nexia Backend com IA funcionando!");
+});
 
-app.post("/chat", async (req, res) => {
+// Rota da IA
+app.post("/api/chat", async (req, res) => {
+  const { message } = req.body;
+
   try {
-    const { message } = req.body;
-
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: "Você é a IA Nexia: gentil, rápida e objetiva." },
         { role: "user", content: message }
       ]
     });
 
-    res.json({
-      reply: completion.choices[0].message.content
-    });
+    const reply = completion.choices[0].message.content;
+    res.json({ reply });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Erro ao gerar resposta da IA." });
   }
 });
 
-app.get("/", (req, res) => {
-  res.send("Nexia backend está rodando!");
-});
-
-app.listen(process.env.PORT || 3000, () =>
-  console.log("Servidor ativo na porta 3000")
-);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Backend rodando na porta ${PORT}`));
